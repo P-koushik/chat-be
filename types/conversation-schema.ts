@@ -1,5 +1,5 @@
-import {Types} from "mongoose"
+import { Types } from "mongoose";
 
 export type TConversation = {
-    members: Types.ObjectId[]
-}
+  members: Types.ObjectId[];
+};
