@@ -8,11 +8,14 @@ import cors from "cors";
 const app = express();
 
 const allowedOrigins = ["http://localhost:3000", process.env.FRONTEND_URL].filter(
-  (value): value is string => Boolean(value),
+  (value): value is string => Boolean(value)
 );
 
 const corsOptions = {
-  origin: function (origin: string | undefined, callback: (err: Error | null, allow?: boolean) => void) {
+  origin: function (
+    origin: string | undefined,
+    callback: (err: Error | null, allow?: boolean) => void
+  ) {
     // Allow requests with no origin (like mobile apps or curl requests)
     if (!origin) return callback(null, true);
 

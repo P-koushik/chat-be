@@ -150,4 +150,3 @@ jobs:
             -H "Content-Type: application/json" \
             -H "User-Agent: GitHubActions-DiscordWebhook" \
             --data-raw "$PAYLOAD"
-  
