@@ -4,7 +4,7 @@ import { Message } from "../../models/messages";
 
 export const get_conversation = async (req: Request, res: Response) => {
   try {
-    const { conversationId } = req.body;
+    const conversationId = req.params.id;
 
     // Validation
     if (!conversationId) {

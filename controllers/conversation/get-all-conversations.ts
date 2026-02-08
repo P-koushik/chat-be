@@ -3,7 +3,7 @@ import { Conversation } from "../../models/conversation";
 
 export const get_all_conversations = async (req: Request, res: Response) => {
   try {
-    const { userId } = req.params;
+    const userId = req.query.userId as string | undefined;
 
     // Validation
     if (!userId) {
