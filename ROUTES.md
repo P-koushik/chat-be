@@ -69,6 +69,13 @@ The server runs on a configurable port (specified in environment variables). All
 - **Description:** Sends a message in a conversation (chat)
 - **Full URL:** `POST /api/v1/conversation/send/message`
 
+### 4. Mark Conversation as Read
+
+- **Method:** `PATCH`
+- **Endpoint:** `/conversation/:id/read`
+- **Description:** Marks unread messages in a conversation as read for a specific user
+- **Full URL:** `PATCH /api/v1/conversation/:id/read`
+
 ---
 
 ## Summary
@@ -82,3 +89,4 @@ The server runs on a configurable port (specified in environment variables). All
 | GET    | `/api/v1/conversation/:id`          | Get conversation by ID             |
 | GET    | `/api/v1/conversation/`             | Get all conversations              |
 | POST   | `/api/v1/conversation/send/message` | Send message in conversation       |
+| PATCH  | `/api/v1/conversation/:id/read`     | Mark conversation as read          |

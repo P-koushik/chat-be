@@ -1,10 +1,9 @@
 import { Request, Response } from "express";
-import { Conversation } from "../../models/conversation";
-import { Message } from "../../models/messages";
+import { getConversationWithMessages } from "../../services/chat";
 
 export const get_conversation = async (req: Request, res: Response) => {
   try {
-    const conversationId = req.params.id;
+    const conversationId = String(req.params.id ?? "");
 
     // Validation
     if (!conversationId) {
@@ -14,37 +13,27 @@ export const get_conversation = async (req: Request, res: Response) => {
       });
     }
 
-    // Get conversation with populated members
-    const conversation = await Conversation.findById(conversationId).populate({
-      path: "members",
-      model: "User",
-    });
-
-    if (!conversation) {
+    const data = await getConversationWithMessages(conversationId);
+    if (!data) {
       return res.status(404).json({
         success: false,
         message: "Conversation not found",
       });
     }
 
-    // Get all messages in the conversation
-    const messages = await Message.find({
-      conversation_id: conversationId,
-    }).sort({ createdAt: 1 });
-
     return res.status(200).json({
       success: true,
       message: "Conversation fetched successfully",
-      data: {
-        conversation,
-        messages,
-      },
+      data,
     });
   } catch (error) {
     console.log("Error fetching conversation:", error);
-    return res.status(500).json({
+    const message = error instanceof Error ? error.message : "Internal server error";
+    const statusCode = message === "Valid conversation ID is required" ? 400 : 500;
+
+    return res.status(statusCode).json({
       success: false,
-      message: "Internal server error",
+      message,
     });
   }
 };

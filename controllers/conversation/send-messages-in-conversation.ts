@@ -1,78 +1,49 @@
 import { Request, Response } from "express";
-import { Conversation } from "../../models/conversation";
-import { Message } from "../../models/messages";
-import { User } from "../../models/user";
+import { createConversationMessage } from "../../services/chat";
+import { getSocketServer } from "../../socket";
+import { getConversationRoom, getUserRoom } from "../../socket/rooms";
 
 export const send_message = async (req: Request, res: Response) => {
   try {
     const { senderId, recipientId, message } = req.body;
 
-    // Validation
-    if (!senderId || !recipientId || !message) {
-      return res.status(400).json({
-        success: false,
-        message: "Sender ID, Recipient ID, and message are required",
-      });
-    }
-
-    // Check if both users exist
-    const sender = await User.findById(senderId);
-    const recipient = await User.findById(recipientId);
-
-    if (!sender || !recipient) {
-      return res.status(404).json({
-        success: false,
-        message: "Sender or recipient not found",
-      });
-    }
-
-    // Prevent sending message to self
-    if (senderId === recipientId) {
-      return res.status(400).json({
-        success: false,
-        message: "Cannot send message to yourself",
-      });
-    }
-
-    // Find or create conversation between two users
-    let conversation = await Conversation.findOne({
-      members: {
-        $all: [senderId, recipientId],
-      },
+    const { conversation, message: createdMessage } = await createConversationMessage({
+      senderId,
+      recipientId,
+      message,
     });
 
-    // If conversation doesn't exist, create one
-    if (!conversation) {
-      conversation = new Conversation({
-        members: [senderId, recipientId],
-      });
-      await conversation.save();
+    try {
+      const io = getSocketServer();
+      const conversationId = conversation._id.toString();
+      io.to(getConversationRoom(conversationId)).emit("message:new", createdMessage);
+      io.to(getUserRoom(senderId)).emit("conversation:updated", { conversationId });
+      io.to(getUserRoom(recipientId)).emit("conversation:updated", { conversationId });
+    } catch (socketError) {
+      console.log("Socket emit skipped:", socketError);
     }
-
-    // Create and save the message
-    const newMessage = new Message({
-      sender_id: senderId,
-      message: message,
-      conversation_id: conversation._id,
-    });
-    await newMessage.save();
-
-    // Populate sender details in the message
-    await newMessage.populate({
-      path: "sender_id",
-      model: "User",
-    });
 
     return res.status(201).json({
       success: true,
       message: "Message sent successfully",
-      data: newMessage,
+      data: createdMessage,
     });
   } catch (error) {
     console.log("Error sending message:", error);
-    return res.status(500).json({
+    const message = error instanceof Error ? error.message : "Internal server error";
+    const statusCode =
+      message === "Sender or recipient not found"
+        ? 404
+        : message === "Cannot send message to yourself" ||
+            message === "Message cannot be empty" ||
+            message === "Invalid sender or recipient ID" ||
+            message === "Sender ID, recipient ID, and message are required"
+          ? 400
+          : 500;
+
+    return res.status(statusCode).json({
       success: false,
-      message: "Internal server error",
+      message,
     });
   }
 };
