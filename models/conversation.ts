@@ -11,4 +11,4 @@ const Conversation_schema = new Schema<TConversation>(
 );
 
 export const Conversation =
-  mongoose.models.conversation || model<TConversation>("Conversation", Conversation_schema);
+  mongoose.models.Conversation || model<TConversation>("Conversation", Conversation_schema);

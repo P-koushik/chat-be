@@ -4,16 +4,19 @@ import mongoose from "mongoose";
 import { Conversation_routes } from "./routes/conversation";
 import { User_routes } from "./routes/user";
 import cors from "cors";
+import { createServer } from "http";
+import { initializeSocketServer } from "./socket";
 
 const app = express();
+const server = createServer(app);
 
-
-const allowedOrigins = [
-  "http://localhost:3000",
-];
+const allowedOrigins = ["http://localhost:3000"];
 
 const corsOptions = {
-  origin: function (origin: string | undefined, callback: (err: Error | null, allow?: boolean) => void) {
+  origin: function (
+    origin: string | undefined,
+    callback: (err: Error | null, allow?: boolean) => void
+  ) {
     // Allow requests with no origin (like mobile apps or curl requests)
     if (!origin) return callback(null, true);
 
@@ -53,6 +56,8 @@ if (env.mongo_url !== "NA") {
 app.use("/api/v1", User_routes);
 app.use("/api/v1", Conversation_routes);
 
-app.listen(env.PORT, () => {
+initializeSocketServer(server, allowedOrigins);
+
+server.listen(env.PORT, () => {
   console.log(`Server is running in port ${env.PORT}`);
 });

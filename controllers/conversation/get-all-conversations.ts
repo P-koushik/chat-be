@@ -1,5 +1,5 @@
 import { Request, Response } from "express";
-import { Conversation } from "../../models/conversation";
+import { getConversationsForUser } from "../../services/chat";
 
 export const get_all_conversations = async (req: Request, res: Response) => {
   try {
@@ -13,15 +13,7 @@ export const get_all_conversations = async (req: Request, res: Response) => {
       });
     }
 
-    // Get all conversations for the user
-    const conversations = await Conversation.find({
-      members: userId,
-    })
-      .populate({
-        path: "members",
-        model: "User",
-      })
-      .sort({ createdAt: -1 });
+    const conversations = await getConversationsForUser(userId);
 
     return res.status(200).json({
       success: true,
@@ -30,9 +22,12 @@ export const get_all_conversations = async (req: Request, res: Response) => {
     });
   } catch (error) {
     console.log("Error fetching conversations:", error);
-    return res.status(500).json({
+    const message = error instanceof Error ? error.message : "Internal server error";
+    const statusCode = message === "Valid user ID is required" ? 400 : 500;
+
+    return res.status(statusCode).json({
       success: false,
-      message: "Internal server error",
+      message,
     });
   }
 };
